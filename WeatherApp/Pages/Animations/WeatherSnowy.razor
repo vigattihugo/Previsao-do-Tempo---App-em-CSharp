@@ -1,0 +1,19 @@
+@* Componente de animação: Nevando ❄️ *@
+<div class="snowy-container">
+    <div class="snow-cloud">
+        <div class="cloud-circle cloud-circle-1"></div>
+        <div class="cloud-circle cloud-circle-2"></div>
+        <div class="cloud-circle cloud-circle-3"></div>
+    </div>
+    <div class="snowflakes">
+        @for (int i = 0; i < 20; i++)
+        {
+            var delay = i * 0.4;
+            var left = (i * 5.0) % 100;
+            var duration = 3 + (i % 3);
+            var size = 3 + (i % 4);
+            <div class="snowflake" style="left: @(left)%; animation-delay: @(delay)s; animation-duration: @(duration)s; width: @(size)px; height: @(size)px"></div>
+        }
+    </div>
+    <div class="snowy-bg"></div>
+</div>

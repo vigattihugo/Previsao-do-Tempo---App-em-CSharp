@@ -1,0 +1,17 @@
+@* Componente de animação: Chuvoso 🌧️ *@
+<div class="rainy-container">
+    <div class="rain-cloud">
+        <div class="cloud-circle cloud-circle-1"></div>
+        <div class="cloud-circle cloud-circle-2"></div>
+        <div class="cloud-circle cloud-circle-3"></div>
+    </div>
+    <div class="raindrops">
+        @for (int i = 0; i < 15; i++)
+        {
+            var delay = i * 0.2;
+            var left = (i * 6.5) % 100;
+            <div class="raindrop" style="left: @(left)%; animation-delay: @(delay)s"></div>
+        }
+    </div>
+    <div class="rainy-bg"></div>
+</div>

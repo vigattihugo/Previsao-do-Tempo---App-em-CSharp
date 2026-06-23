@@ -1,0 +1,464 @@
+@page "/"
+@using WeatherApp.Services
+@using WeatherApp.Models
+@using WeatherApp.Pages.Animations
+@inject WeatherService WeatherService
+@inject ApiKeyService ApiKeyService
+
+<PageTitle>@TituloPagina</PageTitle>
+
+<div class="weather-app">
+    @* ═══════════════════════════════════════════════════
+       CABEÇALHO
+       ═══════════════════════════════════════════════════ *@
+    <header class="weather-header">
+        <h1 class="weather-title">
+            <span class="title-icon">🌤️</span>
+            Previsão do Tempo
+        </h1>
+        <p class="weather-subtitle">Consulte o clima de qualquer cidade do mundo</p>
+    </header>
+
+    @* ═══════════════════════════════════════════════════
+       AVISO: API KEY NÃO CONFIGURADA
+       ═══════════════════════════════════════════════════ *@
+    @if (string.IsNullOrEmpty(_apiKey))
+    {
+        <div class="api-key-warning">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-text">
+                <strong>API Key não configurada!</strong>
+                <p>Para usar o aplicativo, você precisa de uma chave grátis do OpenWeatherMap.</p>
+                <button class="btn btn-warning btn-sm" @onclick="AbrirConfiguracao">
+                    🔑 Configurar Chave da API
+                </button>
+            </div>
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════
+       MODAL DE CONFIGURAÇÃO DA API KEY
+       ═══════════════════════════════════════════════════ *@
+    @if (_mostrarConfig)
+    {
+        <div class="modal-overlay" @onclick="FecharConfigModal">
+            <div class="modal-content config-modal" @onclick:stopPropagation="true">
+                <button class="modal-close" @onclick="FecharConfigModal">&times;</button>
+                <h2>🔑 Configurar Chave da API</h2>
+
+                <div class="config-steps">
+                    <ol>
+                        <li>Acesse <a href="https://openweathermap.org/appid" target="_blank">openweathermap.org/appid</a></li>
+                        <li>Crie uma conta grátis e vá para <strong>API Keys</strong></li>
+                        <li>Copie sua chave (ex: <code>1a2b3c4d5e...</code>)</li>
+                        <li>Cole abaixo e clique em Salvar</li>
+                    </ol>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKeyInput">Sua chave da API OpenWeatherMap:</label>
+                    <input id="apiKeyInput"
+                           type="text"
+                           class="form-control"
+                           placeholder="Digite sua chave aqui..."
+                           @bind="_apiKeyInput"
+                           @bind:event="oninput" />
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" @onclick="FecharConfigModal">Cancelar</button>
+                    <button class="btn btn-primary" @onclick="SalvarChaveAsync"
+                            disabled="@string.IsNullOrEmpty(_apiKeyInput)">
+                        💾 Salvar Chave
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════
+       BARRA DE PESQUISA
+       ═══════════════════════════════════════════════════ *@
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Digite o nome da cidade..."
+                   @bind="_cidadeInput"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   disabled="@_carregando" />
+            <button class="btn btn-search"
+                    @onclick="BuscarClimaAsync"
+                    disabled="@(_carregando || string.IsNullOrWhiteSpace(_cidadeInput) || string.IsNullOrEmpty(_apiKey))">
+                @if (_carregando)
+                {
+                    <span class="spinner"></span>
+                }
+                else
+                {
+                    <span>Buscar</span>
+                }
+            </button>
+        </div>
+
+        @* Sugestões de cidades populares *@
+        <div class="suggested-cities">
+            <span class="suggest-label">Sugestões:</span>
+            @foreach (var sugestao in _cidadesSugeridas)
+            {
+                <button class="btn btn-suggestion"
+                        @onclick="() => SelecionarCidade(sugestao)"
+                        disabled="@_carregando">
+                    @sugestao
+                </button>
+            }
+        </div>
+    </div>
+
+    @* ═══════════════════════════════════════════════════
+       MENSAGEM DE ERRO
+       ═══════════════════════════════════════════════════ *@
+    @if (!string.IsNullOrEmpty(_mensagemErro))
+    {
+        <div class="error-message @(_erroOcultavel ? "error-dismissible" : "")">
+            <span class="error-icon">❌</span>
+            <span class="error-text">@_mensagemErro</span>
+            @if (_erroOcultavel)
+            {
+                <button class="error-dismiss" @onclick="LimparErro">&times;</button>
+            }
+        </div>
+    }
+
+    @* ═══════════════════════════════════════════════════
+       RESULTADO DO CLIMA
+       ═══════════════════════════════════════════════════ *@
+    @if (_dadosClima != null)
+    {
+        <div class="weather-result">
+            @* ── Animação do clima ── *@
+            <div class="weather-animation">
+                <div class="animation-container @ObterClasseAnimacao()">
+                    @switch (_dadosClima.TipoClima)
+                    {
+                        case TipoClima.ClearDay:
+                            <WeatherSunny />
+                            break;
+                        case TipoClima.ClearNight:
+                            <WeatherNight />
+                            break;
+                        case TipoClima.Cloudy:
+                            <WeatherCloudy />
+                            break;
+                        case TipoClima.Rainy:
+                            <WeatherRainy />
+                            break;
+                        case TipoClima.Stormy:
+                            <WeatherStormy />
+                            break;
+                        case TipoClima.Snowy:
+                            <WeatherSnowy />
+                            break;
+                        case TipoClima.Foggy:
+                            <WeatherFoggy />
+                            break;
+                    }
+                </div>
+            </div>
+
+            @* ── Informações principais ── *@
+            <div class="weather-main-info">
+                <div class="city-name">
+                    📍 @_dadosClima.Cidade, @_dadosClima.Pais
+                    <span class="update-time">
+                        Atualizado: @_dadosClima.DataHora.ToString("HH:mm")
+                    </span>
+                </div>
+
+                <div class="temperature-container">
+                    <span class="temperature">@_dadosClima.Temperatura.ToString("F0")</span>
+                    <span class="temperature-unit">°C</span>
+                </div>
+
+                <div class="weather-description">
+                    <img src="https://openweathermap.org/img/wn/@(_dadosClima.Icone)@@2x.png"
+                         alt="@_dadosClima.Descricao"
+                         class="weather-icon" />
+                    <span class="description-text">@_dadosClima.Descricao</span>
+                </div>
+
+                <div class="feels-like">
+                    Sensação térmica: @_dadosClima.SensacaoTermica.ToString("F0")°C
+                </div>
+            </div>
+
+            @* ── Detalhes em grid ── *@
+            <div class="weather-details-grid">
+                <div class="detail-card">
+                    <div class="detail-icon">🌡️</div>
+                    <div class="detail-label">Mín / Máx</div>
+                    <div class="detail-value">
+                        @_dadosClima.TempMinima.ToString("F0")° / @_dadosClima.TempMaxima.ToString("F0")°
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">💧</div>
+                    <div class="detail-label">Umidade</div>
+                    <div class="detail-value">@_dadosClima.Umidade%</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">💨</div>
+                    <div class="detail-label">Vento</div>
+                    <div class="detail-value">
+                        @_dadosClima.VelocidadeVento.ToString("F1") km/h
+                        <span class="wind-dir">@_dadosClima.DirecaoVentoTexto</span>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">👁️</div>
+                    <div class="detail-label">Visibilidade</div>
+                    <div class="detail-value">@(_dadosClima.Visibilidade / 1000) km</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🌤️</div>
+                    <div class="detail-label">Nuvens</div>
+                    <div class="detail-value">@_dadosClima.CoberturaNuvens%</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-label">Pressão</div>
+                    <div class="detail-value">@_dadosClima.Pressao hPa</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🌅</div>
+                    <div class="detail-label">Nascer do Sol</div>
+                    <div class="detail-value">@_dadosClima.NascerDoSol.ToString("HH:mm")</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🌇</div>
+                    <div class="detail-label">Pôr do Sol</div>
+                    <div class="detail-value">@_dadosClima.PorDoSol.ToString("HH:mm")</div>
+                </div>
+            </div>
+
+            @* ── Ações: Atualizar *@
+            <div class="weather-actions">
+                <button class="btn btn-refresh"
+                        @onclick="BuscarClimaAsync"
+                        disabled="@_carregando">
+                    <span class="refresh-icon @(_carregando ? "spin" : "")">🔄</span>
+                    Atualizar
+                </button>
+
+                <button class="btn btn-toggle-auto"
+                        @onclick="AlternarAutoRefresh">
+                    <span>@(_autoRefreshAtivo ? "⏹️" : "▶️")</span>
+                    @(_autoRefreshAtivo ? "Parar Auto-Refresh" : "Auto-Refresh a cada 60s")
+                </button>
+
+                @if (_autoRefreshAtivo)
+                {
+                    <span class="auto-refresh-indicator">
+                        Próxima atualização em @_segundosParaRefresh segundos
+                    </span>
+                }
+            </div>
+        </div>
+    }
+    else if (!_carregando && !string.IsNullOrEmpty(_apiKey))
+    {
+        @* ═══════════════════════════════════════════════════
+           ESTADO VAZIO (quando não há dados ainda)
+           ═══════════════════════════════════════════════════ *@
+        <div class="empty-state">
+            <div class="empty-icon">🌤️</div>
+            <h3>Pronto para consultar o clima!</h3>
+            <p>Digite o nome de uma cidade acima e clique em "Buscar".</p>
+            <p class="empty-tip">💡 Dica: Tente "São Paulo", "Rio de Janeiro" ou "London"</p>
+        </div>
+    }
+</div>
+
+@code {
+    // ════════════════════════════════════════════════════════════
+    // LÓGICA DA PÁGINA EM C#
+    //
+    // Tudo que você vê abaixo é C# puro! Cada variável, método
+    // e propriedade controla o que aparece na tela.
+    // ════════════════════════════════════════════════════════════
+
+    // ─── Variáveis de estado ───
+    // Essas variáveis guardam as informações da página.
+    // Quando elas mudam, o Blazor automaticamente atualiza a tela!
+    private string _cidadeInput = "";
+    private DadosClima? _dadosClima;
+    private string _mensagemErro = "";
+    private bool _erroOcultavel;
+    private bool _carregando;
+    private string _apiKey = "";
+    private string _apiKeyInput = "";
+    private bool _mostrarConfig;
+    private bool _autoRefreshAtivo;
+    private int _segundosParaRefresh;
+    private CancellationTokenSource? _autoRefreshCts;
+
+    // ⏱️ Intervalo do auto-refresh em segundos
+    private const int IntervaloAutoRefresh = 60;
+
+    // 🌆 Cidades sugeridas para facilitar o teste
+    private readonly string[] _cidadesSugeridas = [
+        "São Paulo", "Rio de Janeiro", "London", "New York", "Tokyo", "Paris"
+    ];
+
+    /// <summary>
+    /// Título dinâmico da aba do navegador.
+    /// Se já pesquisou uma cidade, mostra o nome dela no título.
+    /// </summary>
+    private string TituloPagina => _dadosClima != null
+        ? $"Clima em {_dadosClima.Cidade} - Previsão do Tempo"
+        : "Previsão do Tempo";
+
+    // ─── CICLO DE VIDA ───
+
+    /// <summary>
+    /// OnInitializedAsync: executado quando a página carrega.
+    /// Recupera a chave salva no navegador (localStorage).
+    /// Se não existir, o usuário precisa configurar manualmente
+    /// clicando em "Configurar Chave da API".
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        _apiKey = await ApiKeyService.ObterChaveAsync() ?? "";
+    }
+
+    /// <summary>
+    /// Dispose: libera recursos quando o componente é destruído.
+    /// Importante para parar o timer do auto-refresh.
+    /// </summary>
+    public void Dispose()
+    {
+        _autoRefreshCts?.Cancel();
+        _autoRefreshCts?.Dispose();
+    }
+
+    // ─── BUSCA DO CLIMA ───
+
+    /// <summary>
+    /// Método principal: busca o clima da cidade digitada.
+    /// </summary>
+    private async Task BuscarClimaAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_cidadeInput) || string.IsNullOrEmpty(_apiKey))
+            return;
+
+        _carregando = true;
+        _mensagemErro = "";
+        _erroOcultavel = false;
+
+        try
+        {
+            var dados = await WeatherService.BuscarClimaAsync(_cidadeInput.Trim());
+            _dadosClima = dados;
+        }
+        catch (ApiException ex)
+        {
+            _mensagemErro = ex.Message;
+            _erroOcultavel = true;
+        }
+        catch (Exception ex)
+        {
+            _mensagemErro = $"Erro inesperado: {ex.Message}";
+            _erroOcultavel = true;
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task SelecionarCidade(string cidade)
+    {
+        _cidadeInput = cidade;
+        await BuscarClimaAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await BuscarClimaAsync();
+    }
+
+    // ─── CONFIGURAÇÃO DA API KEY ───
+
+    private void AbrirConfiguracao() { _mostrarConfig = true; }
+    private void FecharConfigModal() { _mostrarConfig = false; }
+    private void LimparErro() { _mensagemErro = ""; }
+
+    private async Task SalvarChaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_apiKeyInput))
+            return;
+
+        await ApiKeyService.SalvarChaveAsync(_apiKeyInput.Trim());
+        _apiKey = _apiKeyInput.Trim();
+        _mostrarConfig = false;
+    }
+
+    // ─── AUTO-REFRESH ───
+
+    private void AlternarAutoRefresh()
+    {
+        if (_autoRefreshAtivo)
+        {
+            _autoRefreshAtivo = false;
+            _autoRefreshCts?.Cancel();
+            _segundosParaRefresh = 0;
+        }
+        else
+        {
+            _autoRefreshAtivo = true;
+            _autoRefreshCts = new CancellationTokenSource();
+            _segundosParaRefresh = IntervaloAutoRefresh;
+            _ = ExecutarAutoRefreshAsync(_autoRefreshCts.Token);
+        }
+    }
+
+    private async Task ExecutarAutoRefreshAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            await Task.Delay(1000, token);
+            if (token.IsCancellationRequested) break;
+
+            _segundosParaRefresh--;
+
+            if (_segundosParaRefresh <= 0)
+            {
+                _segundosParaRefresh = IntervaloAutoRefresh;
+                if (_dadosClima != null)
+                    await BuscarClimaAsync();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // ─── UTILITÁRIOS ───
+
+    private string ObterClasseAnimacao()
+    {
+        return _dadosClima?.TipoClima switch
+        {
+            TipoClima.ClearDay => "anim-sunny",
+            TipoClima.ClearNight => "anim-night",
+            TipoClima.Cloudy => "anim-cloudy",
+            TipoClima.Rainy => "anim-rainy",
+            TipoClima.Stormy => "anim-stormy",
+            TipoClima.Snowy => "anim-snowy",
+            TipoClima.Foggy => "anim-foggy",
+            _ => "anim-sunny"
+        };
+    }
+}

@@ -1,0 +1,36 @@
+@* Layout principal do aplicativo
+   O layout define a estrutura visual que envolve todas as páginas.
+   Pense nele como a "casca" do site: cabeçalho, menu e rodapé. *@
+@inherits LayoutComponentBase
+
+<div class="app-container">
+    <header class="app-header">
+        <nav class="nav-container">
+            <a href="/" class="nav-brand">
+                <span class="brand-icon">🌤️</span>
+                <span class="brand-text">Previsão do Tempo</span>
+            </a>
+            <div class="nav-links">
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                    ⛅ Clima
+                </NavLink>
+            </div>
+        </nav>
+    </header>
+
+    <main class="app-main">
+        <div class="container">
+            @Body
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container">
+            <p>
+                🌤️ Previsão do Tempo • Dados fornecidos por
+                <a href="https://openweathermap.org" target="_blank">OpenWeatherMap</a>
+                • Feito com 💜 e C# • Blazor WebAssembly
+            </p>
+        </div>
+    </footer>
+</div>

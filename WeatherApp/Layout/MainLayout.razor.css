@@ -1,0 +1,113 @@
+/* ════════════════════════════════════════════════════════════
+   MAINLAYOUT.RAZOR.CSS - Estilos do Layout Principal (escopo do layout)
+   
+   Este é um arquivo de CSS com escopo (Blazor scoped CSS).
+   Os estilos aqui só afetam elementos DENTRO do MainLayout.
+   
+   O Blazor adiciona automaticamente um atributo único (b-xxx123)
+   nos elementos do layout e nos seletores CSS deste arquivo.
+   ════════════════════════════════════════════════════════════ */
+
+/* ─── ESTILOS GLOBAIS (fora do escopo, mas essenciais) ─── */
+/* Nota: html e body precisam estar em app.css para funcionar globalmente */
+
+/* ─── CONTAINER PRINCIPAL ─── */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ─── CABEÇALHO ─── */
+.app-header {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-brand {
+    color: #fff !important;
+    text-decoration: none !important;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.nav-brand:hover {
+    opacity: 0.9;
+    color: #fff !important;
+}
+
+.brand-icon {
+    font-size: 1.6rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    text-decoration: none !important;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* O NavLink do Blazor adiciona a classe 'active' */
+.nav-link.active {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── CONTEÚDO PRINCIPAL ─── */
+.app-main {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+/* ─── RODAPÉ ─── */
+.app-footer {
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.app-footer p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+}
+
+.app-footer a {
+    color: rgba(255, 255, 255, 0.6) !important;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.app-footer a:hover {
+    color: #fff !important;
+}

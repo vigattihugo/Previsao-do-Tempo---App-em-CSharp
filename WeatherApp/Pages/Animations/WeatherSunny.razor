@@ -1,0 +1,12 @@
+@* Componente de animação: Dia Ensolarado ☀️ *@
+<div class="sunny-container">
+    <div class="sun">
+        <div class="sun-core"></div>
+        @for (int i = 0; i < 12; i++)
+        {
+            var angle = i * 30;
+            <div class="sun-ray" style="transform: rotate(@(angle)deg)"></div>
+        }
+    </div>
+    <div class="clear-sky-bg"></div>
+</div>
