@@ -4,6 +4,11 @@
 
 Este projeto foi criado especialmente para treinar e **começar a aprender C#**. Cada decisão de código é explicada abaixo para que você entenda não apenas **o que** o código faz, mas **por que** ele foi escrito dessa forma.
 
+<img width="1919" height="1760" alt="screencapture-localhost-5235-2026-06-22-21_44_30" src="https://github.com/user-attachments/assets/1214d8d2-aaac-4c07-84d0-f444ca1903e1" />
+
+<img width="1919" height="1760" alt="screencapture-localhost-5235-2026-06-22-21_45_22" src="https://github.com/user-attachments/assets/7d062161-17a4-4769-bc52-f0461949ee28" />
+
+
 ---
 
 ## 🚀 Como Executar
